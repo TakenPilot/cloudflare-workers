@@ -41,14 +41,26 @@ const isNonNullObject = (x: unknown): x is Record<string, any> => isObject(x) &&
 const isAlphaNumeric = (x: string): boolean => KEY_REGEX.test(x);
 const isOrigin = (x: string): boolean => ORIGIN_REGEX.test(x);
 
+/// A policy for an API key. Prefer using the name to identify the policy instead any value
+/// in the config since we can deserialize the name into an enum in clients to optimize away
+/// code paths.
 type ApiKeyPolicy = {
+	/// The name of the policy. Is meant to be deserialized into an enum in clients.
 	name: string,
+	/// Often null.
 	config: object,
 };
 
+/// ApiKeyInfo is the type of the object stored in the API_KEYS KV store.
 type ApiKeyInfo = {
+	/// The API key's key, used to self-identify when passed around.
 	key: string,
+	/// The tenant ID of the API key.
 	tenantId: string,
+	/// Unix timestamp in seconds. It's valid to return expired API keys so clients can
+	/// cache the API key information.
+	expires: number,
+	/// The policies that the API key has.
 	policies: ApiKeyPolicy[],
 };
 
@@ -62,6 +74,7 @@ const isApiKeyInfo = (x: unknown): x is ApiKeyInfo => {
 	return isNonNullObject(x) &&
 		('key' in x && isString(x.key) && x.key.length > ID_MIN_SIZE && x.key.length < ID_MAX_SIZE) &&
 		('tenantId' in x && isString(x.tenantId) && x.tenantId.length > ID_MIN_SIZE && x.tenantId.length < ID_MAX_SIZE) &&
+		('expires' in x && typeof x.expires === 'number') &&
 		('policies' in x && Array.isArray(x.policies) && x.policies.length < POLICIES_NUM_MAX && x.policies.every(isApiKeyPolicy));
 }
 
