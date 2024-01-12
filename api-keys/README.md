@@ -76,3 +76,11 @@ fetch('/api-keys/aaaaaaaaaaa', {
 	}
 );
 ```
+
+## Deploy to production
+
+Run wrangler publish to deploy to Cloudflare.
+
+```zsh
+npx wrangler deploy -e prod
+```
