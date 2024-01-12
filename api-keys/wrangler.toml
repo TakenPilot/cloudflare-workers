@@ -1,17 +1,18 @@
 name = "api-keys"
 main = "src/index.ts"
 compatibility_date = "2023-12-18"
+tsconfig_path = "tsconfig.wrangler.json"
 
 [vars]
-ALLOWED_HOSTS = "localhost"
+ALLOWED_ORIGINS = "http://localhost:8787"
 ALLOWED_AUTH_KEYS = "key1,key2,key3"
 
 [env.staging.vars]
-ALLOWED_HOSTS = "staging.example.com"
+ALLOWED_ORIGINS = "http://localhost"
 ALLOWED_AUTH_KEYS = "key1,key2,key3"
 
 [env.production.vars]
-ALLOWED_HOSTS = "example.com"
+ALLOWED_ORIGINS = "example.com"
 ALLOWED_AUTH_KEYS = ""
 
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
@@ -22,9 +23,9 @@ ALLOWED_AUTH_KEYS = ""
 
 # Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
 # Docs: https://developers.cloudflare.com/workers/runtime-apis/kv
-# [[kv_namespaces]]
-# binding = "MY_KV_NAMESPACE"
-# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+[[kv_namespaces]]
+binding = "API_KEYS"
+id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 # Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
 # Docs: https://developers.cloudflare.com/r2/api/workers/workers-api-usage/

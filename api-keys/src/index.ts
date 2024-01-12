@@ -27,6 +27,8 @@
  */
 
 export interface Env {
+	// ALLOWED_ORIGINS?: string;
+
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
 	API_KEYS: KVNamespace;
 	//
@@ -50,14 +52,14 @@ const ID_MIN_SIZE = 10;
 const ID_MAX_SIZE = 500;
 const POLICIES_NUM_MAX = 1000;
 const KEY_REGEX = /^[a-zA-Z0-9]+$/;
-const ORIGIN_REGEX = /^https?:\/\/[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*(:[0-9]+)?$/;
+const ORIGIN_REGEX = /^https?:\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(:[0-9]+)?$/;
 const API_KEY_PATH = '/api-keys/';
 
 const isString = (x: unknown): x is string => typeof x === 'string';
 const isObject = (x: unknown): x is Record<string, any> => typeof x === 'object';
 const isNonNullObject = (x: unknown): x is Record<string, any> => isObject(x) && x !== null;
 const isAlphaNumeric = (x: string): boolean => KEY_REGEX.test(x);
-const isOrigin = (x: string): boolean => ORIGIN_REGEX.test(x);
+export const isOrigin = (x: string): boolean => ORIGIN_REGEX.test(x);
 
 /// A policy for an API key. Prefer using the name to identify the policy instead any value
 /// in the config since we can deserialize the name into an enum in clients to optimize away
@@ -121,7 +123,7 @@ const getAuthKeys = (env: Env): string[] => {
 	return authKeys.filter(isAlphaNumeric);
 }
 
-const getAllowedOrigins = (env: Env): string[] => {
+export const getAllowedOrigins = (env: Env): string[] => {
 	if (!('ALLOWED_ORIGINS' in env) || !isString(env.ALLOWED_ORIGINS)) {
 		return [];
 	}
@@ -130,7 +132,7 @@ const getAllowedOrigins = (env: Env): string[] => {
 }
 
 export default {
-	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+	async fetch(request: Request, env: Env): Promise<Response> {
 		// Handle CORS preflight requests. This is needed since the API keys are
 		// accessed from other websites. This is only needed for PUT/POST/DELETE requests.
 		// See https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#preflighted_requests
@@ -155,6 +157,7 @@ export default {
 			// since browsers may not send the Origin header for GET requests.
 			const allowedOrigins = getAllowedOrigins(env);
 			const origin = request.headers.get('Origin');
+			console.log("JEY", origin, allowedOrigins, "JEY");
 			if (!origin || !allowedOrigins.includes(origin)) {
 				return new Response('Invalid origin', { status: 400 });
 			}
@@ -180,7 +183,15 @@ export default {
 
 			if (request.method === 'GET') {
 				const value = await env.API_KEYS.get(key);
-				return new Response(value);
+				let response = null;
+				if (!value) {
+					response = new Response('Not found', { status: 404 });
+				} else {
+					response = new Response(value);
+				}
+				response.headers.set("Cache-Control", "max-age=3600");
+				// response.cf.cacheEverything = true;
+				return response;
 			} else if (request.method === 'PUT') {
 				// Check for a valid content type.
 				const contentType = request.headers.get('content-type');
