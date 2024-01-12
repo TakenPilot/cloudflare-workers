@@ -26,17 +26,20 @@ export interface Env {
 }
 
 const KEY_MIN_SIZE = 10;
-const KEY_MAX_SIZE = 100;
+const KEY_MAX_SIZE = 500;
 const VALUE_MAX_SIZE = 500;
+const ID_MIN_SIZE = 10;
+const ID_MAX_SIZE = 500;
+const POLICIES_NUM_MAX = 1000;
 const KEY_REGEX = /^[a-zA-Z0-9]+$/;
 const ORIGIN_REGEX = /^https?:\/\/[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*(:[0-9]+)?$/;
 const API_KEY_PATH = '/api-keys/';
 
-const isString = (value: unknown): value is string => typeof value === 'string';
-const isObject = (value: unknown): value is Record<string, any> => typeof value === 'object';
-const isNonNullObject = (value: unknown): value is Record<string, any> => isObject(value) && value !== null;
-const isAlphaNumeric = (value: string): boolean => KEY_REGEX.test(value);
-const isOrigin = (value: string): boolean => ORIGIN_REGEX.test(value);
+const isString = (x: unknown): x is string => typeof x === 'string';
+const isObject = (x: unknown): x is Record<string, any> => typeof x === 'object';
+const isNonNullObject = (x: unknown): x is Record<string, any> => isObject(x) && x !== null;
+const isAlphaNumeric = (x: string): boolean => KEY_REGEX.test(x);
+const isOrigin = (x: string): boolean => ORIGIN_REGEX.test(x);
 
 type ApiKeyPolicy = {
 	name: string,
@@ -45,19 +48,21 @@ type ApiKeyPolicy = {
 
 type ApiKeyInfo = {
 	key: string,
+	tenantId: string,
 	policies: ApiKeyPolicy[],
 };
 
-const isApiKeyPolicy = (value: unknown): value is ApiKeyPolicy => {
-	return isNonNullObject(value) &&
-		'name' in value && isString(value.name) &&
-		'config' in value && isObject(value.config);
+const isApiKeyPolicy = (x: unknown): x is ApiKeyPolicy => {
+	return isNonNullObject(x) &&
+		('name' in x && isString(x.name) && x.name.length > ID_MIN_SIZE && x.name.length < ID_MAX_SIZE) &&
+		'config' in x && isObject(x.config);
 }
 
-const isApiKeyInfo = (value: unknown): value is ApiKeyInfo => {
-	return isNonNullObject(value) &&
-		'key' in value && isString(value.key) &&
-		'policies' in value && Array.isArray(value.policies) && value.policies.every(isApiKeyPolicy);
+const isApiKeyInfo = (x: unknown): x is ApiKeyInfo => {
+	return isNonNullObject(x) &&
+		('key' in x && isString(x.key) && x.key.length > ID_MIN_SIZE && x.key.length < ID_MAX_SIZE) &&
+		('tenantId' in x && isString(x.tenantId) && x.tenantId.length > ID_MIN_SIZE && x.tenantId.length < ID_MAX_SIZE) &&
+		('policies' in x && Array.isArray(x.policies) && x.policies.length < POLICIES_NUM_MAX && x.policies.every(isApiKeyPolicy));
 }
 
 /// Get the list of allowed auth keys. This is a combination of the
