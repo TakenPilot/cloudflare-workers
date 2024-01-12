@@ -1,11 +1,29 @@
 /**
- * Welcome to Cloudflare Workers! This is your first worker.
+ * A Cloudflare Worker that implements an API for managing API keys. API keys are stored
+ * in the API_KEYS KV store. The API is protected by an auth key that is passed in the
+ * Authorization header. The API is also protected by CORS by checking the Origin header
+ * against the ALLOWED_ORIGINS environment variable. The API is meant to be used by
+ * other websites, so it's important to restrict access to the API to prevent unauthorized
+ * access.
+ *
+ * The API is NOT protected by rate limiting since it will contain the policies for rate-limiting
+ * other services, therefore it's important to only use strong auth keys. Instead, we will rely on
+ * Cloudflare's anti-DDoS protection to prevent brute force attacks. The API is also not
+ * protected by a CSRF token since it's not meant to be used by forms.
+ *
+ * In non-production environments, the API has known auth keys that are used for testing, set in
+ * plain text in the ALLOWED_AUTH_KEYS environment variable. In production environments, the
+ * ALLOWED_AUTH_KEYS environment variable is empty and the auth keys are set as secrets in the
+ * Cloudflare dashboard. The secret auth keys are set as environment variables that begin with
+ * the prefix "SECRET_AUTH_KEY_" so they can be rotated easily, or have different auth keys for
+ * different services, i.e., SECRET_AUTH_KEY_SERVICE_A, SECRET_AUTH_KEY_SERVICE_B, etc.
  *
  * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
+ * - Open a browser tab at http://localhost:8787/ to see worker in action
+ * - Run `npm run deploy` to publish worker
  *
  * Learn more at https://developers.cloudflare.com/workers/
+ *
  */
 
 export interface Env {
