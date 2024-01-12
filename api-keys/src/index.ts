@@ -14,7 +14,7 @@
  * In non-production environments, the API has known auth keys that are used for testing, set in
  * plain text in the ALLOWED_AUTH_KEYS environment variable. In production environments, the
  * ALLOWED_AUTH_KEYS environment variable is empty and the auth keys are set as secrets in the
- * Cloudflare dashboard. The secret auth keys are set as environment variables that begin with
+ * Cloudflare dashboard. The secret auth keys are set as secrets in Cloudflare that begin with
  * the prefix "SECRET_AUTH_KEY_" so they can be rotated easily, or have different auth keys for
  * different services, i.e., SECRET_AUTH_KEY_SERVICE_A, SECRET_AUTH_KEY_SERVICE_B, etc.
  *
@@ -45,6 +45,7 @@ const isString = (x: unknown): x is string => typeof x === 'string';
 const isObject = (x: unknown): x is Record<string, any> => typeof x === 'object';
 const isNonNullObject = (x: unknown): x is Record<string, any> => isObject(x) && x !== null;
 const isAlphaNumeric = (x: string): boolean => KEY_REGEX.test(x);
+export const isValidKey = (x: string): boolean => x.length >= KEY_MIN_SIZE && x.length <= KEY_MAX_SIZE && isAlphaNumeric(x);
 export const isOrigin = (x: string): boolean => ORIGIN_REGEX.test(x);
 
 /// A policy for an API key. Prefer using the name to identify the policy instead any value
@@ -162,7 +163,7 @@ export default {
 			const key = pathname.slice(API_KEY_PATH.length);
 
 			// Limit the size of the key and reject non-alphanumeric characters.
-			if (key.length > KEY_MIN_SIZE && key.length > KEY_MAX_SIZE && !isAlphaNumeric(key)) {
+			if (!isValidKey(key)) {
 				return new Response('Invalid key', { status: 400 });
 			}
 

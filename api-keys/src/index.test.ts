@@ -1,4 +1,4 @@
-import worker, { isOrigin, getAllowedOrigins } from "./index";
+import worker, { isOrigin, isValidKey, getAllowedOrigins } from "./index";
 
 describe("GET", () => {
 	it("is missing /api-keys/", async () => {
@@ -148,4 +148,16 @@ describe("getAllowedOrigins", () => {
 		delete env2.ALLOWED_ORIGINS;
 		expect(getAllowedOrigins(env2)).toEqual([]);
 	})
+});
+
+describe("isValidKey", () => {
+	it("works", () => {
+		expect(isValidKey("a".repeat(10))).toBe(true);
+		expect(isValidKey("a".repeat(9))).toBe(false);
+		expect(isValidKey("a".repeat(500))).toBe(true);
+		expect(isValidKey("a".repeat(501))).toBe(false);
+		expect(isValidKey("a".repeat(20) + "_")).toBe(false);
+		expect(isValidKey("a".repeat(20) + "/")).toBe(false);
+		expect(isValidKey("a".repeat(20) + ".")).toBe(false);
+	});
 });
