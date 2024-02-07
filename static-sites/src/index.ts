@@ -104,9 +104,9 @@ const cacheNotFound = 3600;
 const getCacheControl = (pathname: string): string => {
 	const ext = getExtension(pathname);
 	if (contentExts.includes(ext)) {
-		return `public, max - age=${cacheContent} `;
+		return `public, max-age=${cacheContent} `;
 	}
-	return `public, max - age=${cacheAssets} `;
+	return `public, max-age=${cacheAssets} `;
 }
 
 const getCacheKey = (url: URL): Request => {
@@ -117,7 +117,7 @@ const getCacheKey = (url: URL): Request => {
 
 const getNotFoundResponse = (): Response => {
 	const headers = new Headers();
-	headers.set("Cache-Control", `public, max - age=${cacheNotFound} `);
+	headers.set("Cache-Control", `public, max-age=${cacheNotFound} `);
 	return new Response('Not found', { status: 404, headers });
 }
 
