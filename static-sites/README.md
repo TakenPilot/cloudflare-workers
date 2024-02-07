@@ -1,24 +1,32 @@
-# Static Sites via Cloudflare Worker
+# Static Sites via Cloudflare Worker and R2
 
-## Overview
+Serve static websites via a Cloudflare Worker and R2. This worker will serve the files from the directory that matches the hostname of the request. Set the worker as the custom hostname for the site in Cloudflare.
 
-Serve static sites via Cloudflare Worker.
+## Directory Structure
 
-Assumes a R2 directory structure where the top-level of the bucket is the hostname of the site, and the paths within the hostname directory are the paths of the site. There may be additional top-level directories that are subdomains of the main site.
+For each site that you want to serve from R2, create a directory with the full hostname of the site. This worker will serve the files within that directory when the Request hostname matches that directory name.
 
-```
-account-maker.com
-customclient.account-maker.com
-dev.softwarepatterns.com
-failback.account-maker.com
-softwarepatterns.com
-```
+## Redirects
 
-The host that is served can be modified by adding a cookie called `__Host-hostname` with the value of the host to be served. This can be used to opt-in to a test group and maintain that group until the cookie is removed. (TODO: How to restrict the test to that hostname instead of all hostnames served?)
+Redirects can occur if a file does not exist for that path, and a key for that "hostname/path" exists in the Redirects KV.
+
+## Cache
+
+The worker will cache the files that it serves to prevent unnecessary fetches from R2 and to speed up the response time.
+
+## Purge
+
+Particular routes can be cleared from the cache by setting the PURGE_TOKEN env variable to a secret value and then sending a PURGE request with the header `Authentication: Bearer <token>` set to that value.
+
+## AB Testing Groups
+
+Adding a cookie called `__Host-hostname` will change the host that is served. For example, setting the cookie to `__Host-hostname=example.com.test` will serve the test website "example.com.test" until the cookie is cleared.
+
+Clients can read the cookie to set analytics for hich website they're seeing.
 
 ## Testing
 
-Run wrangler dev to test locally.
+Run wrangler dev to test locally. Disable local mode to test the local worker against production locally. This worker is read-only, so it's safe to test against production data.
 
 ```zsh
 npx wrangler dev
@@ -29,5 +37,5 @@ npx wrangler dev
 Run wrangler publish to deploy to Cloudflare.
 
 ```zsh
-npx wrangler deploy -e prod
+npx wrangler deploy
 ```
