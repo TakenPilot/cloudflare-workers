@@ -1,18 +1,10 @@
-# API Keys API
+# API Keys via Cloudflare Worker
 
-## Overview
+The API Keys API allows you to create, update, and delete API keys, designed to be limit access to other APIs.
 
-The API Keys API allows you to create, update, and delete API keys.
+The GET endpoint is public, but the PUT and DELETE endpoints are protected by one or more secret keys that can be rotated.
 
-## API Keys
-
-## Testing
-
-Run wrangler dev to test locally.
-
-```zsh
-npx wrangler dev
-```
+## Examples
 
 ### Create an API key
 
@@ -75,6 +67,14 @@ fetch('/api-keys/aaaaaaaaaaa', {
 		console.error('error', e);
 	}
 );
+```
+
+## Testing
+
+Run wrangler dev to test locally.
+
+```zsh
+npx wrangler dev
 ```
 
 ## Deploy to production

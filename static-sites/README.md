@@ -16,13 +16,11 @@ The worker will cache the files that it serves to prevent unnecessary fetches fr
 
 ## Purge
 
-Particular routes can be cleared from the cache by setting the PURGE_TOKEN env variable to a secret value and then sending a PURGE request with the header `Authentication: Bearer <token>` set to that value.
+Particular routes can be cleared from the cache by setting the PURGE_TOKEN env variable to a secret value and then sending a PURGE request with the header `Authentication: Bearer <token>`.
 
 ## AB Testing Groups
 
-Adding a cookie called `__Host-hostname` will change the host that is served. For example, setting the cookie to `__Host-hostname=example.com.test` will serve the test website "example.com.test" until the cookie is cleared.
-
-Clients can read the cookie to set analytics for hich website they're seeing.
+Adding a cookie called `__Host-hostname` will change the host that is served. For example, setting the cookie on example.com to `__Host-hostname=example.com.test` will serve the test website "example.com.test" instead of the regular site until the cookie is cleared. Clients can read the cookie to set analytics.
 
 ## Testing
 
