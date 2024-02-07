@@ -1,0 +1,4 @@
+/* Only for VSCode. See tsconfig.wrangler.json or tsconfig.test.json for the actual config. */
+{
+	"extends": ["./tsconfig.test.json"]
+}

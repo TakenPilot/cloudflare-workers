@@ -6,13 +6,10 @@
   "scripts": {
     "test": "npm test --workspaces"
   },
-  "author": "",
+  "author": "Dane Stuckel",
   "license": "ISC",
-  "devDependencies": {
-    "@types/jest": "^29.5.11",
-    "wrangler": "^3.22.4"
-  },
   "workspaces": [
-    "api-keys"
+    "api-keys",
+    "static-site"
   ]
 }
