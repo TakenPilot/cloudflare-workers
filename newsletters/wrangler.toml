@@ -1,0 +1,12 @@
+name = "newsletters"
+main = "src/index.ts"
+compatibility_date = "2023-12-18"
+tsconfig = "tsconfig.wrangler.json"
+
+[vars]
+ENVIRONMENT = "development"
+
+[[d1_databases]]
+binding = "NewslettersD1"
+database_name = "newsletters"
+database_id = "cf72100e-975d-4856-bfca-11daaed18c31"

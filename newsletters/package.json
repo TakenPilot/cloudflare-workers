@@ -1,5 +1,5 @@
 {
-	"name": "api-keys",
+	"name": "newsletters",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
@@ -11,10 +11,13 @@
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20240129.0",
 		"@vitest/coverage-v8": "^1.2.2",
-		"vitest-environment-miniflare": "^2.14.2",
 		"tslib": "^2.6.2",
 		"typescript": "^5.3.3",
 		"vitest": "^1.2.2",
+		"vitest-environment-miniflare": "^2.14.2",
 		"wrangler": "^3.27.0"
+	},
+	"dependencies": {
+		"valibot": "^0.28.1"
 	}
 }
