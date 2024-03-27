@@ -7,17 +7,5 @@
 		"deploy:prod": "wrangler deploy -e prod",
 		"dev": "wrangler dev",
 		"test": "NODE_OPTIONS=--experimental-vm-modules npx vitest run --coverage"
-	},
-	"devDependencies": {
-		"@cloudflare/workers-types": "^4.20240129.0",
-		"@vitest/coverage-v8": "^1.2.2",
-		"tslib": "^2.6.2",
-		"typescript": "^5.3.3",
-		"vitest": "^1.2.2",
-		"vitest-environment-miniflare": "^2.14.2",
-		"wrangler": "^3.27.0"
-	},
-	"dependencies": {
-		"valibot": "^0.28.1"
 	}
 }
