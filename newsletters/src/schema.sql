@@ -28,8 +28,8 @@ CREATE TABLE subscription (
 	email VARCHAR(127) NOT NULL,
 	/* From the request url and header origin (not header hostname). Remember to verify a match! */
 	hostname VARCHAR(127) NOT NULL,
-	/* Explicitly optional until they want multiple lists. */
-	list_name VARCHAR(15),
+	/* Use empty string to represent no list, because NULL does not enforce uniqueness. */
+	list_name VARCHAR(15) NOT NULL,
 	created_at BIGINT NOT NULL,
 	person_name VARCHAR(127),
 	email_confirmed_at BIGINT,

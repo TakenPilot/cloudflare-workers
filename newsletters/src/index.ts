@@ -39,9 +39,14 @@ import { generateId } from './lib/crypto';
 import { Env, isErrorWithMessage } from './common';
 import htmlContent from './index.html';
 import { Result } from './lib/results';
+import { isUniqueConstraintError } from './lib/d1';
 
 const getNotFoundResponse = (): Response => {
 	return new Response('Not found', { status: 404 });
+};
+
+const getInternalServerErrorResponse = (): Response => {
+	return new Response('Internal server error', { status: 500 });
 };
 
 const getRequestData = async (request: Request): Promise<Result<Record<string, unknown>, 'INVALID_JSON' | 'INVALID_CONTENT_TYPE'>> => {
@@ -70,7 +75,7 @@ const getRequestData = async (request: Request): Promise<Result<Record<string, u
 const SubscribeSchema = object({
 	email: string([validEmail()]),
 	hostname: string(),
-	list_name: optional(string()),
+	list_name: string(),
 	person_name: optional(string()),
 });
 
@@ -92,9 +97,26 @@ const handleSubscribe = async (request: Request, env: Env): Promise<Response> =>
 			...data,
 		});
 	} catch (e: unknown) {
+		console.error('Error inserting subscription record', e);
 		if (isErrorWithMessage(e)) {
 			// If the user and hostname combination already exists, we can't subscribe them again.
-			if (e.message.includes('already exists')) {
+			if (isUniqueConstraintError(e)) {
+				// Get the existing record to see why.
+				const record = await getSubscriptionRecordByUniqueValues(env.NewslettersD1, data);
+				if (record === null) {
+					// ??? This should never happen if we just got a conflict.
+					return getInternalServerErrorResponse();
+				}
+				// If they were unsubscribed, allow them to subscribe again.
+				if (record.unsubscribed_at !== null) {
+					await setSubscriptionRecordUnsubscribedAt(env.NewslettersD1, {
+						id: record.id,
+						unsubscribed_at: null,
+					});
+					return new Response('Resubscribed', { status: 200 });
+				}
+
+				// Otherwise, they're already subscribed.
 				return new Response('Already subscribed', { status: 400 });
 			}
 
@@ -121,7 +143,7 @@ const handleSubscribe = async (request: Request, env: Env): Promise<Response> =>
 const UnsubscribeSchema = object({
 	email: string([validEmail()]),
 	hostname: string(),
-	list_name: optional(string()),
+	list_name: string(),
 });
 const handleUnsubscribe = async (request: Request, env: Env): Promise<Response> => {
 	const requestDataResult = await getRequestData(request);
@@ -140,6 +162,11 @@ const handleUnsubscribe = async (request: Request, env: Env): Promise<Response> 
 	const record = await getSubscriptionRecordByUniqueValues(env.NewslettersD1, data);
 	if (record === null) {
 		return getNotFoundResponse();
+	}
+
+	// If they're already unsubscribed, we don't need to do anything.
+	if (record.unsubscribed_at !== null) {
+		return new Response('Already unsubscribed', { status: 200 });
 	}
 
 	await setSubscriptionRecordUnsubscribedAt(env.NewslettersD1, {

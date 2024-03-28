@@ -12,5 +12,5 @@ export const TOKEN_EXPIRES_IN = HOUR_MS * 2;
 export const isString = (value: unknown): value is string => typeof value === 'string';
 export const isNonNullObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 export const isTimeExpired = (expiresAt: number) => expiresAt < Date.now();
-export const isErrorWithMessage = <T>(value: unknown): value is T & { message: string } =>
-	isNonNullObject(value) && isString(value.message);
+export const isErrorWithMessage = <T>(value: unknown): value is T & { name: string; message: string } =>
+	isNonNullObject(value) && isString(value.name) && isString(value.message);

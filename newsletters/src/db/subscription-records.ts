@@ -5,7 +5,8 @@ export type SubscriptionRecord = {
 	id: string;
 	email: string;
 	hostname: string;
-	list_name: string | null;
+	/** Use empty string instead of null because NULL does not enforce uniqueness. */
+	list_name: string;
 	person_name: string | null;
 	created_at: Date | null;
 	email_confirmed_at: Date | null;
@@ -18,7 +19,7 @@ export type InsertSubscriptionOptions = Subset<
 		id: string;
 		email: string;
 		hostname: string;
-		list_name?: string | null;
+		list_name: string;
 		person_name?: string | null;
 	}
 >;
@@ -26,7 +27,7 @@ export type InsertSubscriptionOptions = Subset<
 export const insertSubscriptionRecord = async (db: D1Database, options: InsertSubscriptionOptions): Promise<void> => {
 	await db
 		.prepare('INSERT INTO subscription (id, email, hostname, list_name, person_name, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-		.bind(options.id, options.email, options.hostname, options.list_name || null, options.person_name || null, new Date().getTime())
+		.bind(options.id, options.email, options.hostname, options.list_name, options.person_name || null, new Date().getTime())
 		.run();
 };
 
@@ -35,7 +36,7 @@ export type SubscriptionRecordUniqueValues = Subset<
 	{
 		email: string;
 		hostname: string;
-		list_name?: string | null;
+		list_name: string;
 	}
 >;
 
@@ -45,7 +46,7 @@ export const getSubscriptionRecordByUniqueValues = async (
 ): Promise<SubscriptionRecord | null> => {
 	return db
 		.prepare('SELECT * FROM subscription WHERE email = ? AND hostname = ? AND list_name = ?')
-		.bind(options.email, options.hostname, options.list_name || null)
+		.bind(options.email, options.hostname, options.list_name)
 		.first();
 };
 
@@ -58,7 +59,8 @@ export type SetUnsubscribedAtOptions = Subset<
 >;
 
 export const setSubscriptionRecordUnsubscribedAt = async (db: D1Database, options: SetUnsubscribedAtOptions) => {
-	await db.prepare('UPDATE subscription SET unsubscribed_at = ? WHERE id = ?').bind(options.unsubscribed_at, options.id).run();
+	const unsubscribed_at = options.unsubscribed_at?.getTime() || null;
+	await db.prepare('UPDATE subscription SET unsubscribed_at = ? WHERE id = ?').bind(unsubscribed_at, options.id).run();
 };
 
 export type SetEmailSubscriptionOptions = Subset<
@@ -70,5 +72,6 @@ export type SetEmailSubscriptionOptions = Subset<
 >;
 
 export const setSubscriptionRecordEmailConfirmedAt = async (db: D1Database, options: SetEmailSubscriptionOptions): Promise<void> => {
-	await db.prepare('UPDATE subscription SET email_confirmed_at = ? WHERE id = ?').bind(options.email_confirmed_at, options.id).run();
+	const email_confirmed_at = options.email_confirmed_at?.getTime() || null;
+	await db.prepare('UPDATE subscription SET email_confirmed_at = ? WHERE id = ?').bind(email_confirmed_at, options.id).run();
 };
