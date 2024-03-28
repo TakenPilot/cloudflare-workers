@@ -1,20 +1,16 @@
-import { defineConfig } from "vitest/config";
+// @ts-ignore
+import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
 
-export default defineConfig({
+export default defineWorkersConfig({
 	test: {
-		environment: "miniflare",
-		// Configuration is automatically loaded from `.env`, `package.json` and
-		// `wrangler.toml` files by default, but you can pass any additional Miniflare
-		// API options here:
-		// environmentOptions: {
-		//   bindings: { KEY: "value" },
-		//   kvNamespaces: ["TEST_NAMESPACE"],
-		// },
-		typecheck: {
-			tsconfig: "tsconfig.test.json"
+		poolOptions: {
+			workers: {
+				miniflare: {},
+				wrangler: {
+					configPath: './wrangler.toml',
+				},
+			},
 		},
 	},
-	assetsInclude: [
-		"**/*.html",
-	]
-})
+	assetsInclude: ['**/*.html'],
+});

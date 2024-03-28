@@ -6,6 +6,6 @@
 		"deploy": "wrangler deploy",
 		"deploy:prod": "wrangler deploy -e prod",
 		"dev": "wrangler dev",
-		"test": "NODE_OPTIONS=--experimental-vm-modules npx vitest run --coverage"
+		"test": "NODE_OPTIONS=--experimental-vm-modules npx vitest run"
 	}
 }

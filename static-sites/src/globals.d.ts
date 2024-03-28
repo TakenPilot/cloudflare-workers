@@ -1,10 +1,7 @@
-import { DurableObjectId, DurableObjectStorage } from "@cloudflare/workers-types/experimental";
+import { Env } from './index';
 
-declare global {
-	function getMiniflareBindings(): Bindings;
-	function getMiniflareDurableObjectStorage(
-		id: DurableObjectId
-	): Promise<DurableObjectStorage>;
+declare module 'cloudflare:test' {
+	interface ProvidedEnv extends Env {}
 }
 
-export { };
+export {};

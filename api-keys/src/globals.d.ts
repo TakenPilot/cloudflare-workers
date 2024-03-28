@@ -1,8 +1,7 @@
-declare global {
-	function getMiniflareBindings(): Bindings;
-	function getMiniflareDurableObjectStorage(
-		id: DurableObjectId
-	): Promise<DurableObjectStorage>;
+import { Env } from './index';
+
+declare module 'cloudflare:test' {
+	interface ProvidedEnv extends Env {}
 }
 
-export { };
+export {};

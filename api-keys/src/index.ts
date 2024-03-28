@@ -26,9 +26,13 @@
  *
  */
 
+import { KVNamespace } from '@cloudflare/workers-types/experimental';
+
 export interface Env {
 	// See https://developers.cloudflare.com/workers/runtime-apis/kv/
 	API_KEYS: KVNamespace;
+	ALLOWED_ORIGINS?: string;
+	ALLOWED_AUTH_KEYS?: string;
 }
 
 const KEY_MIN_SIZE = 10;
@@ -53,37 +57,55 @@ export const isOrigin = (x: string): boolean => ORIGIN_REGEX.test(x);
 /// code paths.
 type ApiKeyPolicy = {
 	/// The name of the policy. Is meant to be deserialized into an enum in clients.
-	name: string,
+	name: string;
 	/// Often null.
-	config: object,
+	config: object;
 };
 
 /// ApiKeyInfo is the type of the object stored in the API_KEYS KV store.
 type ApiKeyInfo = {
 	/// The API key's key, used to self-identify when passed around.
-	key: string,
+	key: string;
 	/// The tenant ID of the API key.
-	tenantId: string,
+	tenantId: string;
 	/// Unix timestamp in seconds. It's valid to return expired API keys so clients can
 	/// cache the API key information.
-	expires: number,
+	expires: number;
 	/// The policies that the API key has.
-	policies: ApiKeyPolicy[],
+	policies: ApiKeyPolicy[];
 };
 
 const isApiKeyPolicy = (x: unknown): x is ApiKeyPolicy => {
-	return isNonNullObject(x) &&
-		('name' in x && isString(x.name) && x.name.length > ID_MIN_SIZE && x.name.length < ID_MAX_SIZE) &&
-		'config' in x && isObject(x.config);
-}
+	return (
+		isNonNullObject(x) &&
+		'name' in x &&
+		isString(x.name) &&
+		x.name.length > ID_MIN_SIZE &&
+		x.name.length < ID_MAX_SIZE &&
+		'config' in x &&
+		isObject(x.config)
+	);
+};
 
 const isApiKeyInfo = (x: unknown): x is ApiKeyInfo => {
-	return isNonNullObject(x) &&
-		('key' in x && isString(x.key) && x.key.length > ID_MIN_SIZE && x.key.length < ID_MAX_SIZE) &&
-		('tenantId' in x && isString(x.tenantId) && x.tenantId.length > ID_MIN_SIZE && x.tenantId.length < ID_MAX_SIZE) &&
-		('expires' in x && typeof x.expires === 'number') &&
-		('policies' in x && Array.isArray(x.policies) && x.policies.length < POLICIES_NUM_MAX && x.policies.every(isApiKeyPolicy));
-}
+	return (
+		isNonNullObject(x) &&
+		'key' in x &&
+		isString(x.key) &&
+		x.key.length > ID_MIN_SIZE &&
+		x.key.length < ID_MAX_SIZE &&
+		'tenantId' in x &&
+		isString(x.tenantId) &&
+		x.tenantId.length > ID_MIN_SIZE &&
+		x.tenantId.length < ID_MAX_SIZE &&
+		'expires' in x &&
+		typeof x.expires === 'number' &&
+		'policies' in x &&
+		Array.isArray(x.policies) &&
+		x.policies.length < POLICIES_NUM_MAX &&
+		x.policies.every(isApiKeyPolicy)
+	);
+};
 
 /// Get the list of allowed auth keys. This is a combination of the
 /// ALLOWED_AUTH_KEYS environment variable and any environment variables
@@ -108,7 +130,7 @@ const getAuthKeys = (env: Env): string[] => {
 	}
 
 	return authKeys.filter(isAlphaNumeric);
-}
+};
 
 export const getAllowedOrigins = (env: Env): string[] => {
 	if (!('ALLOWED_ORIGINS' in env) || !isString(env.ALLOWED_ORIGINS)) {
@@ -116,7 +138,7 @@ export const getAllowedOrigins = (env: Env): string[] => {
 	}
 
 	return env.ALLOWED_ORIGINS.split(',').filter(isOrigin);
-}
+};
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -175,7 +197,7 @@ export default {
 				} else {
 					response = new Response(value);
 				}
-				response.headers.set("Cache-Control", "max-age=3600");
+				response.headers.set('Cache-Control', 'max-age=3600');
 				// response.cf.cacheEverything = true;
 				return response;
 			} else if (request.method === 'PUT') {

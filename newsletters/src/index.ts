@@ -26,49 +26,50 @@
  *
  */
 
-import { string, object, email as validEmail, safeParseAsync, optional } from "valibot";
+import { string, object, email as validEmail, safeParseAsync, optional } from 'valibot';
 import {
 	insertSubscriptionRecord,
 	getSubscriptionRecordByUniqueValues,
 	setSubscriptionRecordUnsubscribedAt,
-	setSubscriptionRecordEmailConfirmedAt
-} from "./db/subscription-records";
-import { EmailConfirm, getListConfigRecordByUniqueValues } from "./db/list-config-records";
-import { consumeAuthToken } from "./domain/subscription-tokens";
-import { generateId } from "./lib/crypto";
-import { Env, isNonNullObject, isString } from "./common";
+	setSubscriptionRecordEmailConfirmedAt,
+} from './db/subscription-records';
+import { EmailConfirm, getListConfigRecordByUniqueValues } from './db/list-config-records';
+import { consumeAuthToken } from './domain/subscription-tokens';
+import { generateId } from './lib/crypto';
+import { Env, isNonNullObject, isString } from './common';
+import { ExecutionContext } from '@cloudflare/workers-types/experimental';
 
 const getNotFoundResponse = (): Response => {
 	return new Response('Not found', { status: 404 });
-}
+};
 
 const SubscribeSchema = object({
 	email: string([validEmail()]),
 	hostname: string(),
 	list_name: optional(string()),
-	person_name: optional(string())
+	person_name: optional(string()),
 });
 const handleSubscribe = async (request: Request, env: Env): Promise<Response> => {
 	const data = await safeParseAsync(SubscribeSchema, await request.json());
 	if (data.success === false) {
-		return new Response("Bad request", { status: 400 });
+		return new Response('Bad request', { status: 400 });
 	}
 
 	try {
 		await insertSubscriptionRecord(env.NewslettersD1, {
 			id: generateId(15),
-			...data.output
+			...data.output,
 		});
 	} catch (e: unknown) {
 		if (isNonNullObject(e) && isString(e.message)) {
 			// If the user and hostname combination already exists, we can't subscribe them again.
-			if (e.message.includes("already exists")) {
-				return new Response("Already subscribed", { status: 400 });
+			if (e.message.includes('already exists')) {
+				return new Response('Already subscribed', { status: 400 });
 			}
 
 			// If there is a constraint violation on the hostname, they're not from a known source.
-			if (e.message.includes("hostname")) {
-				return new Response("Bad request", { status: 400 });
+			if (e.message.includes('hostname')) {
+				return new Response('Bad request', { status: 400 });
 			}
 		}
 		throw e;
@@ -76,13 +77,13 @@ const handleSubscribe = async (request: Request, env: Env): Promise<Response> =>
 
 	const listConfig = await getListConfigRecordByUniqueValues(env.NewslettersD1, {
 		hostname: data.output.hostname,
-		list_name: data.output.list_name
+		list_name: data.output.list_name,
 	});
 	if (listConfig !== null && listConfig.email_confirm === EmailConfirm.Link) {
 		// TODO: Send the user an email with a link to confirm their email address.
 	}
-	return new Response("Subscribed", { status: 200 });
-}
+	return new Response('Subscribed', { status: 200 });
+};
 
 const UnsubscribeSchema = object({
 	email: string([validEmail()]),
@@ -92,11 +93,11 @@ const UnsubscribeSchema = object({
 const handleUnsubscribe = async (request: Request, env: Env): Promise<Response> => {
 	const data = await safeParseAsync(UnsubscribeSchema, await request.json());
 	if (data.success === false) {
-		return new Response("Bad request", { status: 400 });
+		return new Response('Bad request', { status: 400 });
 	}
 
 	const record = await getSubscriptionRecordByUniqueValues(env.NewslettersD1, {
-		...data.output
+		...data.output,
 	});
 	if (record === null) {
 		return getNotFoundResponse();
@@ -104,11 +105,11 @@ const handleUnsubscribe = async (request: Request, env: Env): Promise<Response> 
 
 	await setSubscriptionRecordUnsubscribedAt(env.NewslettersD1, {
 		id: record.id,
-		unsubscribed_at: new Date()
+		unsubscribed_at: new Date(),
 	});
 
-	return new Response("Unsubscribed", { status: 200 });
-}
+	return new Response('Unsubscribed', { status: 200 });
+};
 
 const EmailConfirmSchema = object({
 	token: string(),
@@ -116,7 +117,7 @@ const EmailConfirmSchema = object({
 const handleEmailConfirmation = async (request: Request, env: Env): Promise<Response> => {
 	const data = await safeParseAsync(EmailConfirmSchema, await request.json());
 	if (data.success === false) {
-		return new Response("Bad request", { status: 400 });
+		return new Response('Bad request', { status: 400 });
 	}
 
 	const tokenResult = await consumeAuthToken(env, data.output.token);
@@ -127,24 +128,24 @@ const handleEmailConfirmation = async (request: Request, env: Env): Promise<Resp
 
 	await setSubscriptionRecordEmailConfirmedAt(env.NewslettersD1, {
 		id: token.subscription_id,
-		email_confirmed_at: new Date()
+		email_confirmed_at: new Date(),
 	});
 
-	return new Response("Confirmed", { status: 200 });
-}
+	return new Response('Confirmed', { status: 200 });
+};
 
 // People have preferences, but we don't.
 const routePostHandlers = {
-	"/signup": handleSubscribe,
-	"/subscribe": handleSubscribe,
-	"/join": handleSubscribe,
+	'/signup': handleSubscribe,
+	'/subscribe': handleSubscribe,
+	'/join': handleSubscribe,
 
-	"/optout": handleUnsubscribe,
-	"/unsubscribe": handleUnsubscribe,
-	"/leave": handleUnsubscribe,
+	'/optout': handleUnsubscribe,
+	'/unsubscribe': handleUnsubscribe,
+	'/leave': handleUnsubscribe,
 
-	"/verify": handleEmailConfirmation,
-	"/confirm": handleEmailConfirmation,
+	'/verify': handleEmailConfirmation,
+	'/confirm': handleEmailConfirmation,
 } as Record<string, (request: Request, env: Env) => Promise<Response>>;
 
 export default {
@@ -152,17 +153,17 @@ export default {
 		const url = new URL(request.url);
 		const pathname = url.pathname;
 
-		if (request.method === "GET") {
+		if (request.method === 'GET') {
 			// If they have the right API key, they may be able to download the list of subscribers.
 		}
 
-		if (request.method === "POST") {
+		if (request.method === 'POST') {
 			const routeHandler = routePostHandlers[pathname];
 			if (routeHandler) {
 				return routeHandler(request, env);
 			}
 		}
 
-		return new Response("Not found", { status: 404 });
+		return new Response('Not found', { status: 404 });
 	},
 };

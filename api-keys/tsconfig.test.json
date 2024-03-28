@@ -1,7 +1,0 @@
-{
-	"extends": "./tsconfig.base.json",
-	"compilerOptions": {
-		"types": ["jest"]
-	},
-	"include": ["./src/globals.d.ts", "./src/*.test.ts"]
-}

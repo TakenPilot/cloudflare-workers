@@ -1,0 +1,22 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"lib": ["ESNext"],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"types": [],
+		"resolveJsonModule": true,
+		"allowJs": true,
+		"checkJs": false,
+		"noEmit": true,
+		"isolatedModules": true,
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true
+		// "baseUrl": ".",
+		// "paths": {
+		//   "@cloudflare/vitest-pool-workers/config": ["node_modules/@cloudflare/vitest-pool-workers/dist/config/index.d.ts"]
+		// }
+	}
+}

@@ -24,7 +24,7 @@ fetch('/api-keys/aaaaaaaaaaa', {
 	},
 	(e) => {
 		console.error('error', e);
-	}
+	},
 );
 ```
 
@@ -44,7 +44,7 @@ fetch('/api-keys/aaaaaaaaaaa', {
 	},
 	(e) => {
 		console.error('error', e);
-	}
+	},
 );
 ```
 
@@ -65,7 +65,7 @@ fetch('/api-keys/aaaaaaaaaaa', {
 	},
 	(e) => {
 		console.error('error', e);
-	}
+	},
 );
 ```
 

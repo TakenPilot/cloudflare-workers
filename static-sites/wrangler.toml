@@ -2,6 +2,7 @@ name = "static-sites"
 main = "src/index.ts"
 compatibility_date = "2023-12-18"
 tsconfig = "tsconfig.wrangler.json"
+compatibility_flags = ["nodejs_compat"]
 
 [vars]
 PURGE_TOKEN = "abc123"

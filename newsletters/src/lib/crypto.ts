@@ -1,4 +1,4 @@
-import { Crypto } from "@cloudflare/workers-types/experimental";
+import { Crypto } from '@cloudflare/workers-types/experimental';
 
 declare global {
 	// Only refer to `crypto` in this file. Everywhere else with should refer
@@ -25,11 +25,12 @@ export const generateId = (length: number) => {
 	}
 
 	return result;
-}
+};
 
-const toHex = (buffer: Uint8Array): string => Array.from(new Uint8Array(buffer))
-	.map(b => ('00' + b.toString(16)).slice(-2))
-	.join('');
+const toHex = (buffer: Uint8Array): string =>
+	Array.from(new Uint8Array(buffer))
+		.map((b) => ('00' + b.toString(16)).slice(-2))
+		.join('');
 
 const fromHex = (hex: string): Uint8Array => {
 	const bytes = new Uint8Array(hex.length / 2);
@@ -37,24 +38,24 @@ const fromHex = (hex: string): Uint8Array => {
 		bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
 	}
 	return bytes;
-}
+};
 
 /**
  * It's silly that the keyLength is configurable since there is only one optimal
  * key length for each algorithm.
  */
 const knownPBKDF2Algorithms = {
-	"SHA-1": { keyLength: 160 },
-	"SHA-256": { keyLength: 256 },
-	"SHA-384": { keyLength: 384 },
-	"SHA-512": { keyLength: 512 },
-}
+	'SHA-1': { keyLength: 160 },
+	'SHA-256': { keyLength: 256 },
+	'SHA-384': { keyLength: 384 },
+	'SHA-512': { keyLength: 512 },
+};
 
 export class PBKDF2 {
 	constructor(options: Partial<PBKDF2> = {}) {
-		this.algorithm = options.algorithm || "SHA-256";
+		this.algorithm = options.algorithm || 'SHA-256';
 		this.iterations = options.iterations || 100000;
-		this.delimiter = options.delimiter || "$";
+		this.delimiter = options.delimiter || '$';
 		this.keyLength = options.keyLength || knownPBKDF2Algorithms[this.algorithm].keyLength;
 	}
 	algorithm: string & keyof typeof knownPBKDF2Algorithms;
@@ -63,14 +64,11 @@ export class PBKDF2 {
 	keyLength: number;
 
 	async hash(password: string): Promise<string> {
-		const name = "PBKDF2";
-		const key = await crypto.subtle.importKey(
-			"raw",
-			new TextEncoder().encode(password.normalize("NFKC")),
-			{ name },
-			false,
-			["deriveBits", "deriveKey"]
-		);
+		const name = 'PBKDF2';
+		const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password.normalize('NFKC')), { name }, false, [
+			'deriveBits',
+			'deriveKey',
+		]);
 
 		const salt = crypto.getRandomValues(new Uint8Array(16));
 		const derivedKey = await crypto.subtle.deriveBits(
@@ -78,10 +76,10 @@ export class PBKDF2 {
 				name,
 				salt,
 				iterations: this.iterations,
-				hash: this.algorithm
+				hash: this.algorithm,
 			},
 			key,
-			this.keyLength
+			this.keyLength,
 		);
 
 		const saltHex = toHex(salt);
@@ -93,25 +91,22 @@ export class PBKDF2 {
 		const [saltHex, hashedKeyHex] = hashedPassword.split(this.delimiter);
 		const salt = fromHex(saltHex);
 		const hashedKey = fromHex(hashedKeyHex);
-		const name = "PBKDF2";
+		const name = 'PBKDF2';
 
-		const key = await crypto.subtle.importKey(
-			"raw",
-			new TextEncoder().encode(password.normalize("NFKC")),
-			{ name },
-			false,
-			["deriveBits", "deriveKey"]
-		);
+		const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password.normalize('NFKC')), { name }, false, [
+			'deriveBits',
+			'deriveKey',
+		]);
 
 		const derivedKeyBuffer = await crypto.subtle.deriveBits(
 			{
 				name,
 				salt,
 				iterations: this.iterations,
-				hash: this.algorithm
+				hash: this.algorithm,
 			},
 			key,
-			this.keyLength
+			this.keyLength,
 		);
 
 		const derivedKey = new Uint8Array(derivedKeyBuffer);

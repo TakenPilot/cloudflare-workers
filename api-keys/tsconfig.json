@@ -1,4 +1,7 @@
-/* Only for VSCode. See tsconfig.wrangler.json or tsconfig.test.json for the actual config. */
 {
-	"extends": ["./tsconfig.wrangler.json", "./tsconfig.test.json"]
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers", "./src/globals.d.ts"]
+	},
+	"include": ["./src/*.test.ts"]
 }

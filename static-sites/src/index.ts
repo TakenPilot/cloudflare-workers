@@ -40,24 +40,24 @@ export interface Env {
  * @example getExtension(".") // "."
  */
 const getExtension = (path: string): string => {
-	const dotIndex = path.indexOf(".");
+	const dotIndex = path.indexOf('.');
 	if (dotIndex === -1) {
-		return "";
+		return '';
 	}
 	return path.slice(dotIndex);
-}
+};
 
 const getNormalizedOrigin = (req: Request): string => {
 	const url = new URL(req.url);
 
 	// If cookie exists, use it.
-	const cookie = req.headers.get("cookie");
+	const cookie = req.headers.get('cookie');
 	if (cookie) {
 		const match = cookie.match(/__Host-hostname=([^;]+)/);
 		if (match) {
 			try {
 				const decodedHostname = decodeURIComponent(match[1]);
-				return new URL("https://" + decodedHostname).origin;
+				return new URL('https://' + decodedHostname).origin;
 			} catch {
 				// If cookie is malformed, ignore it.
 			}
@@ -65,29 +65,29 @@ const getNormalizedOrigin = (req: Request): string => {
 	}
 
 	return url.origin;
-}
+};
 
 export const normalizePathname = (pathname: string): string => {
 	// Assume always starts with "/"
-	const indexName = "index.html";
+	const indexName = 'index.html';
 
-	if (pathname === "") {
+	if (pathname === '') {
 		return `/${indexName}`;
 	}
 
-	const hasLeadingSlash = pathname[0] === "/";
-	const hasTrailingSlash = pathname.length > 0 && pathname[pathname.length - 1] === "/";
-	const hasExtension = pathname.length > 0 && !hasTrailingSlash && getExtension(pathname) !== "";
+	const hasLeadingSlash = pathname[0] === '/';
+	const hasTrailingSlash = pathname.length > 0 && pathname[pathname.length - 1] === '/';
+	const hasExtension = pathname.length > 0 && !hasTrailingSlash && getExtension(pathname) !== '';
 
-	let tail = "";
+	let tail = '';
 	if (hasTrailingSlash) {
 		tail = indexName;
 	} else if (!hasExtension) {
 		tail = `/${indexName}`;
 	}
 
-	return `${hasLeadingSlash ? "" : "/"}${pathname}${tail}`;
-}
+	return `${hasLeadingSlash ? '' : '/'}${pathname}${tail}`;
+};
 
 // HTML files are content, and anything else is an asset of content. Change this as needed.
 const contentExts = ['.html'];
@@ -107,25 +107,25 @@ const getCacheControl = (pathname: string): string => {
 		return `public, max-age=${cacheContent} `;
 	}
 	return `public, max-age=${cacheAssets} `;
-}
+};
 
 const getCacheKey = (url: URL): Request => {
 	const origin = url.origin;
 	const pathname = normalizePathname(url.pathname);
 	return new Request(new URL(pathname, origin));
-}
+};
 
 const getNotFoundResponse = (): Response => {
 	const headers = new Headers();
-	headers.set("Cache-Control", `public, max-age=${cacheNotFound} `);
+	headers.set('Cache-Control', `public, max-age=${cacheNotFound} `);
 	return new Response('Not found', { status: 404, headers });
-}
+};
 
 const getObjectResponse = (pathname: string, obj: R2ObjectBody): Response => {
 	const headers = new Headers();
 	obj.writeHttpMetadata(headers);
 	headers.set('etag', obj.httpEtag);
-	headers.set("Cache-Control", getCacheControl(pathname));
+	headers.set('Cache-Control', getCacheControl(pathname));
 
 	// TODO: hotlink protection of assets.
 
@@ -134,30 +134,30 @@ const getObjectResponse = (pathname: string, obj: R2ObjectBody): Response => {
 	return new Response(obj.body, {
 		headers,
 	});
-}
+};
 
 const getRedirectResponse = (redirect: string): Response => {
 	return new Response(null, {
 		status: 301,
 		headers: {
-			"Location": redirect,
-			"Cache-Control": getCacheControl(redirect)
+			Location: redirect,
+			'Cache-Control': getCacheControl(redirect),
 		},
 	});
-}
+};
 
 const getMethodNotAllowedResponse = (): Response => {
-	return new Response("Method not allowed", {
+	return new Response('Method not allowed', {
 		status: 405,
 	});
-}
+};
 
 const handlePurge = async (cache: Cache, cacheKey: any): Promise<Response> => {
 	cache.delete(cacheKey);
-	return new Response("Purged", {
+	return new Response('Purged', {
 		status: 200,
 	});
-}
+};
 
 export default {
 	async fetch(request: Request, env: Env, context: ExecutionContext): Promise<Response> {
@@ -165,13 +165,13 @@ export default {
 		const url = new URL(request.url, getNormalizedOrigin(request));
 		const cacheKey = getCacheKey(url);
 
-		if (request.method === "PURGE") {
-			if (env.PURGE_TOKEN && request.headers.get("Authorization") !== `Bearer ${env.PURGE_TOKEN} `) {
-				return handlePurge(cache, cacheKey);
+		if (request.method === 'PURGE') {
+			if (env.PURGE_TOKEN && request.headers.get('Authorization') !== `Bearer ${env.PURGE_TOKEN} `) {
+				return await handlePurge(cache, cacheKey);
 			}
 		}
 
-		if (request.method !== "GET") {
+		if (request.method !== 'GET') {
 			return getMethodNotAllowedResponse();
 		}
 
