@@ -21,17 +21,12 @@ export const generateAuthToken = async (
 	const tokenRecords = await getSubscriptionTokenRecordBySubscriptionId(env.NewslettersD1, tokenType, subscription_id);
 
 	if (tokenRecords.success && tokenRecords.results.length > 0) {
-		console.log('tokenRecords', tokenRecords);
 		const existingUnexpiredToken = tokenRecords.results.find((token) => !isTimeExpired(Number(token.expires_at) - TOKEN_EXPIRES_IN / 2));
-
-		console.log('existingUnexpiredToken', existingUnexpiredToken);
 
 		// Prevent generating new tokens if they already have a token that was recently generated.
 		if (existingUnexpiredToken) {
 			return Err('EXISTING_UNEXPIRED_TOKEN');
 		}
-
-		console.log('existingUnexpiredToken??!', existingUnexpiredToken);
 
 		// Overwise, delete all previous tokens of same type because we're going to give them a new one.
 		// This is to prevent the user from having multiple tokens of the same type.

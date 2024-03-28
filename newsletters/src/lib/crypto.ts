@@ -27,12 +27,12 @@ export const generateId = (length: number) => {
 	return result;
 };
 
-const toHex = (buffer: Uint8Array): string =>
+export const toHex = (buffer: Uint8Array): string =>
 	Array.from(new Uint8Array(buffer))
 		.map((b) => ('00' + b.toString(16)).slice(-2))
 		.join('');
 
-const fromHex = (hex: string): Uint8Array => {
+export const fromHex = (hex: string): Uint8Array => {
 	const bytes = new Uint8Array(hex.length / 2);
 	for (let i = 0; i < hex.length; i += 2) {
 		bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
