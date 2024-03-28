@@ -36,11 +36,35 @@ import {
 import { EmailConfirm, getListConfigRecordByUniqueValues } from './db/list-config-records';
 import { consumeAuthToken } from './domain/subscription-tokens';
 import { generateId } from './lib/crypto';
-import { Env, isNonNullObject, isString } from './common';
-import { ExecutionContext } from '@cloudflare/workers-types/experimental';
+import { Env, isErrorWithMessage } from './common';
+import htmlContent from './index.html';
+import { Result } from './lib/results';
 
 const getNotFoundResponse = (): Response => {
 	return new Response('Not found', { status: 404 });
+};
+
+const getRequestData = async (request: Request): Promise<Result<Record<string, unknown>, 'INVALID_JSON' | 'INVALID_CONTENT_TYPE'>> => {
+	if (request.headers.get('content-type') === 'application/json') {
+		try {
+			return { ok: true, value: await request.json() };
+		} catch (e: unknown) {
+			return { ok: false, error: 'INVALID_JSON' };
+		}
+	}
+
+	if (request.headers.get('content-type') === 'application/x-www-form-urlencoded') {
+		const formData = await request.formData();
+		const data: Record<string, unknown> = {};
+
+		for (const [key, value] of formData.entries()) {
+			data[key] = value;
+		}
+
+		return { ok: true, value: data };
+	}
+
+	return { ok: false, error: 'INVALID_CONTENT_TYPE' };
 };
 
 const SubscribeSchema = object({
@@ -49,19 +73,26 @@ const SubscribeSchema = object({
 	list_name: optional(string()),
 	person_name: optional(string()),
 });
+
 const handleSubscribe = async (request: Request, env: Env): Promise<Response> => {
-	const data = await safeParseAsync(SubscribeSchema, await request.json());
-	if (data.success === false) {
+	const requestDataResult = await getRequestData(request);
+	if (!requestDataResult.ok) {
+		return new Response(requestDataResult.error, { status: 400 });
+	}
+
+	const parseResult = await safeParseAsync(SubscribeSchema, requestDataResult.value);
+	if (parseResult.success === false) {
 		return new Response('Bad request', { status: 400 });
 	}
+	const data = parseResult.output;
 
 	try {
 		await insertSubscriptionRecord(env.NewslettersD1, {
 			id: generateId(15),
-			...data.output,
+			...data,
 		});
 	} catch (e: unknown) {
-		if (isNonNullObject(e) && isString(e.message)) {
+		if (isErrorWithMessage(e)) {
 			// If the user and hostname combination already exists, we can't subscribe them again.
 			if (e.message.includes('already exists')) {
 				return new Response('Already subscribed', { status: 400 });
@@ -76,12 +107,14 @@ const handleSubscribe = async (request: Request, env: Env): Promise<Response> =>
 	}
 
 	const listConfig = await getListConfigRecordByUniqueValues(env.NewslettersD1, {
-		hostname: data.output.hostname,
-		list_name: data.output.list_name,
+		hostname: data.hostname,
+		list_name: data.list_name,
 	});
+
 	if (listConfig !== null && listConfig.email_confirm === EmailConfirm.Link) {
 		// TODO: Send the user an email with a link to confirm their email address.
 	}
+
 	return new Response('Subscribed', { status: 200 });
 };
 
@@ -91,14 +124,20 @@ const UnsubscribeSchema = object({
 	list_name: optional(string()),
 });
 const handleUnsubscribe = async (request: Request, env: Env): Promise<Response> => {
-	const data = await safeParseAsync(UnsubscribeSchema, await request.json());
-	if (data.success === false) {
-		return new Response('Bad request', { status: 400 });
+	const requestDataResult = await getRequestData(request);
+	if (!requestDataResult.ok) {
+		return new Response(requestDataResult.error, { status: 400 });
 	}
 
-	const record = await getSubscriptionRecordByUniqueValues(env.NewslettersD1, {
-		...data.output,
-	});
+	console.log('requestDataResult', requestDataResult.value);
+
+	const parseResult = await safeParseAsync(UnsubscribeSchema, requestDataResult.value);
+	if (parseResult.success === false) {
+		return new Response('Bad request', { status: 400 });
+	}
+	const data = parseResult.output;
+
+	const record = await getSubscriptionRecordByUniqueValues(env.NewslettersD1, data);
 	if (record === null) {
 		return getNotFoundResponse();
 	}
@@ -115,12 +154,18 @@ const EmailConfirmSchema = object({
 	token: string(),
 });
 const handleEmailConfirmation = async (request: Request, env: Env): Promise<Response> => {
-	const data = await safeParseAsync(EmailConfirmSchema, await request.json());
-	if (data.success === false) {
-		return new Response('Bad request', { status: 400 });
+	const requestDataResult = await getRequestData(request);
+	if (!requestDataResult.ok) {
+		return new Response(requestDataResult.error, { status: 400 });
 	}
 
-	const tokenResult = await consumeAuthToken(env, data.output.token);
+	const parseResult = await safeParseAsync(EmailConfirmSchema, requestDataResult.value);
+	if (parseResult.success === false) {
+		return new Response('Bad request', { status: 400 });
+	}
+	const data = parseResult.output;
+
+	const tokenResult = await consumeAuthToken(env, data.token);
 	if (!tokenResult.ok) {
 		return new Response(tokenResult.error, { status: 400 });
 	}
@@ -149,16 +194,25 @@ const routePostHandlers = {
 } as Record<string, (request: Request, env: Env) => Promise<Response>>;
 
 export default {
-	async fetch(request: Request, env: Env, context: ExecutionContext): Promise<Response> {
+	async fetch(request: Request, env: Env): Promise<Response> {
 		const url = new URL(request.url);
 		const pathname = url.pathname;
 
 		if (request.method === 'GET') {
 			// If they have the right API key, they may be able to download the list of subscribers.
+			switch (pathname) {
+				case '/':
+					return new Response(htmlContent, {
+						headers: {
+							'Content-Type': 'text/html',
+						},
+					});
+			}
 		}
 
 		if (request.method === 'POST') {
 			const routeHandler = routePostHandlers[pathname];
+
 			if (routeHandler) {
 				return routeHandler(request, env);
 			}

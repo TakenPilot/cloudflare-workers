@@ -7,6 +7,7 @@ export type SubscriptionRecord = {
 	hostname: string;
 	list_name: string | null;
 	person_name: string | null;
+	created_at: Date | null;
 	email_confirmed_at: Date | null;
 	unsubscribed_at: Date | null;
 };
@@ -24,8 +25,8 @@ export type InsertSubscriptionOptions = Subset<
 
 export const insertSubscriptionRecord = async (db: D1Database, options: InsertSubscriptionOptions): Promise<void> => {
 	await db
-		.prepare('INSERT INTO subscription (id, email, hostname, list_name, person_name) VALUES (?, ?, ?, ?)')
-		.bind(options.id, options.email, options.hostname, options.list_name || null, options.person_name || null)
+		.prepare('INSERT INTO subscription (id, email, hostname, list_name, person_name, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+		.bind(options.id, options.email, options.hostname, options.list_name || null, options.person_name || null, new Date().getTime())
 		.run();
 };
 

@@ -4,7 +4,7 @@
  */
 CREATE TABLE hostname_config (
 	hostname VARCHAR(127) NOT NULL PRIMARY KEY,
-	google_recaptcha_secret VARCHAR(127),
+	google_recaptcha_secret VARCHAR(127)
 );
 /*
  List config is optional.
@@ -14,9 +14,9 @@ CREATE TABLE list_config (
 	id VARCHAR(15) NOT NULL PRIMARY KEY,
 	hostname VARCHAR(127) NOT NULL,
 	list_name VARCHAR(15) NOT NULL,
-	email_confirm VARCHAR(15),
+	email_confirm VARCHAR(15)
 );
-CREATE UNIQUE list_config_hostname_list_name ON list_config(hostname, list_name);
+CREATE UNIQUE INDEX list_config_hostname_list_name ON list_config (hostname, list_name);
 /*
  Main table.
  May add or remove without JOINs.
@@ -33,7 +33,7 @@ CREATE TABLE subscription (
 	created_at BIGINT NOT NULL,
 	person_name VARCHAR(127),
 	email_confirmed_at BIGINT,
-	unsubscribed_at BIGINT,
+	unsubscribed_at BIGINT
 );
 CREATE UNIQUE INDEX subscription_email_hostname_list_name ON subscription(email, hostname, list_name);
 /*

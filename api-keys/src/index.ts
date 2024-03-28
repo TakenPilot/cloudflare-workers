@@ -27,6 +27,7 @@
  */
 
 import { KVNamespace } from '@cloudflare/workers-types/experimental';
+import { object, string, number, unknown, array, minLength, maxLength, is } from 'valibot';
 
 export interface Env {
 	// See https://developers.cloudflare.com/workers/runtime-apis/kv/
@@ -46,8 +47,7 @@ const ORIGIN_REGEX = /^https?:\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(:[0-9]+)?$/;
 const API_KEY_PATH = '/api-keys/';
 
 const isString = (x: unknown): x is string => typeof x === 'string';
-const isObject = (x: unknown): x is Record<string, any> => typeof x === 'object';
-const isNonNullObject = (x: unknown): x is Record<string, any> => isObject(x) && x !== null;
+const isNonNullObject = (x: unknown): x is Record<string, any> => typeof x === 'object' && x !== null;
 const isAlphaNumeric = (x: string): boolean => KEY_REGEX.test(x);
 export const isValidKey = (x: string): boolean => x.length >= KEY_MIN_SIZE && x.length <= KEY_MAX_SIZE && isAlphaNumeric(x);
 export const isOrigin = (x: string): boolean => ORIGIN_REGEX.test(x);
@@ -75,37 +75,17 @@ type ApiKeyInfo = {
 	policies: ApiKeyPolicy[];
 };
 
-const isApiKeyPolicy = (x: unknown): x is ApiKeyPolicy => {
-	return (
-		isNonNullObject(x) &&
-		'name' in x &&
-		isString(x.name) &&
-		x.name.length > ID_MIN_SIZE &&
-		x.name.length < ID_MAX_SIZE &&
-		'config' in x &&
-		isObject(x.config)
-	);
-};
+const ApiKeyPolicySchema = object({
+	name: string([minLength(ID_MIN_SIZE), maxLength(ID_MAX_SIZE)]),
+	config: object({}, unknown()),
+});
 
-const isApiKeyInfo = (x: unknown): x is ApiKeyInfo => {
-	return (
-		isNonNullObject(x) &&
-		'key' in x &&
-		isString(x.key) &&
-		x.key.length > ID_MIN_SIZE &&
-		x.key.length < ID_MAX_SIZE &&
-		'tenantId' in x &&
-		isString(x.tenantId) &&
-		x.tenantId.length > ID_MIN_SIZE &&
-		x.tenantId.length < ID_MAX_SIZE &&
-		'expires' in x &&
-		typeof x.expires === 'number' &&
-		'policies' in x &&
-		Array.isArray(x.policies) &&
-		x.policies.length < POLICIES_NUM_MAX &&
-		x.policies.every(isApiKeyPolicy)
-	);
-};
+const ApiKeyInfoSchema = object({
+	key: string([minLength(ID_MIN_SIZE), maxLength(ID_MAX_SIZE)]),
+	tenantId: string([minLength(ID_MIN_SIZE), maxLength(ID_MAX_SIZE)]),
+	expires: number(),
+	policies: array(ApiKeyPolicySchema, [maxLength(POLICIES_NUM_MAX)]),
+});
 
 /// Get the list of allowed auth keys. This is a combination of the
 /// ALLOWED_AUTH_KEYS environment variable and any environment variables
@@ -228,7 +208,7 @@ export default {
 				// This is to ensure that the key is not set by the user.
 				value.key = key;
 
-				if (!isApiKeyInfo(value)) {
+				if (!is(ApiKeyInfoSchema, value)) {
 					return new Response('Invalid ApiKeyInfo', { status: 400 });
 				}
 

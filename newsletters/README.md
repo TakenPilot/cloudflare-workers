@@ -26,10 +26,27 @@ If there is an API key set for a known website, it can be used to download the c
 
 ## Testing
 
+Set local DB. If already exists, delete the .wrangler directory.
+
+```zsh
+npx wrangler d1 execute newsletters --local --file=./src/schema.sql
+```
+
 Run wrangler dev to test locally.
 
 ```zsh
-npx wrangler dev
+npm run dev
+```
+
+### Debug Testing
+
+```zsh
+brew install sqlite-utils
+sqlite-utils tables .wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite
+sqlite-utils rows .wrangler/state/v3/d1/miniflare-D1DatabaseObject/* hostname_config
+sqlite-utils rows .wrangler/state/v3/d1/miniflare-D1DatabaseObject/* list_config
+sqlite-utils rows .wrangler/state/v3/d1/miniflare-D1DatabaseObject/* subscription
+sqlite-utils rows .wrangler/state/v3/d1/miniflare-D1DatabaseObject/* subscription_token
 ```
 
 ## Deploy to production
