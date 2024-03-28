@@ -1,4 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types/experimental';
+import { Subset } from '../common';
 
 export const enum EmailConfirm {
 	Link = 'link',
@@ -12,10 +13,13 @@ export type ListConfig = {
 	email_confirm?: EmailConfirm;
 };
 
-export type ListConfigUniqueValues = {
-	hostname: string;
-	list_name?: string;
-};
+export type ListConfigUniqueValues = Subset<
+	ListConfig,
+	{
+		hostname: string;
+		list_name?: string;
+	}
+>;
 
 export const getListConfigRecordByUniqueValues = async (db: D1Database, options: ListConfigUniqueValues): Promise<ListConfig | null> => {
 	return db

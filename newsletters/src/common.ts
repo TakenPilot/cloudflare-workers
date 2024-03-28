@@ -5,6 +5,8 @@ export interface Env {
 	ENVIRONMENT?: string;
 }
 
+export type Subset<T extends U, U> = U;
+
 const HOUR_MS = 1000 * 60 * 60;
 export const TOKEN_EXPIRES_IN = HOUR_MS * 2;
 export const isString = (value: unknown): value is string => typeof value === 'string';
