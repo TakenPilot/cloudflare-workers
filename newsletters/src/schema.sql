@@ -33,7 +33,9 @@ CREATE TABLE subscription (
 	created_at BIGINT NOT NULL,
 	person_name VARCHAR(127),
 	email_confirmed_at BIGINT,
-	unsubscribed_at BIGINT
+	unsubscribed_at BIGINT,
+	/* All hostnames must be known. */
+	FOREIGN KEY (hostname) REFERENCES hostname_config(hostname)
 );
 CREATE UNIQUE INDEX subscription_email_hostname_list_name ON subscription(email, hostname, list_name);
 /*
@@ -51,3 +53,6 @@ CREATE TABLE subscription_token (
 	FOREIGN KEY (subscription_id) REFERENCES subscription(id)
 );
 CREATE UNIQUE INDEX subscription_token_subscription_id_token_type ON subscription_token(subscription_id, token_type);
+/* Test example */
+INSERT INTO hostname_config (hostname, google_recaptcha_secret)
+VALUES ('example.com', null)

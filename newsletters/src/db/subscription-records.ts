@@ -24,11 +24,19 @@ export type InsertSubscriptionOptions = Subset<
 	}
 >;
 
+export const getSubscriptionRecordById = async (db: D1Database, id: string): Promise<SubscriptionRecord | null> => {
+	return db.prepare('SELECT * FROM subscription WHERE id = ?').bind(id).first();
+};
+
 export const insertSubscriptionRecord = async (db: D1Database, options: InsertSubscriptionOptions): Promise<void> => {
 	await db
 		.prepare('INSERT INTO subscription (id, email, hostname, list_name, person_name, created_at) VALUES (?, ?, ?, ?, ?, ?)')
 		.bind(options.id, options.email, options.hostname, options.list_name, options.person_name || null, new Date().getTime())
 		.run();
+};
+
+export const deleteSubscriptionRecordById = async (db: D1Database, id: string): Promise<void> => {
+	await db.prepare('DELETE FROM subscription WHERE id = ?').bind(id).run();
 };
 
 export type SubscriptionRecordUniqueValues = Subset<
